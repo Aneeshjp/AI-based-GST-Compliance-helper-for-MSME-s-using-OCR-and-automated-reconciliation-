@@ -27,11 +27,26 @@ function Invoices() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
 
-  useEffect(() => {
+  const loadInvoices = async () => {
     if (!user) return;
-    supabase.from("invoices").select("*").eq("user_id", user.id).order("invoice_date", { ascending: false })
-      .then(({ data }) => setInvoices(data || []));
-  }, [user]);
+    try {
+      const { data, error } = await supabase.from("invoices")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("invoice_date", { ascending: false });
+      
+      if (error) {
+        console.error("Supabase Fetch Error (Invoices):", error);
+        return;
+      }
+      
+      setInvoices(data || []);
+    } catch (err) {
+      console.error("Unexpected Error fetching invoices:", err);
+    }
+  };
+
+  useEffect(() => { loadInvoices(); }, [user]);
 
   const filtered = invoices.filter(i => {
     if (filter !== "all" && i.status !== filter) return false;
@@ -48,10 +63,10 @@ function Invoices() {
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by invoice #, vendor, GSTIN…"
             className="w-full pl-9 pr-3 py-2.5 rounded-lg border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
         </div>
-        <div className="flex gap-2 overflow-x-auto">
-          {["all","matched","mismatched","missing","flagged"].map(s => (
+        <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0">
+          {["all","pending","matched","mismatched","missing","flagged"].map(s => (
             <button key={s} onClick={() => setFilter(s)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize border whitespace-nowrap ${filter === s ? "bg-primary text-primary-foreground border-primary" : "bg-card hover:bg-accent"}`}>
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize border whitespace-nowrap transition-all ${filter === s ? "bg-primary text-primary-foreground border-primary shadow-sm" : "bg-card hover:bg-accent border-border"}`}>
               {s}
             </button>
           ))}

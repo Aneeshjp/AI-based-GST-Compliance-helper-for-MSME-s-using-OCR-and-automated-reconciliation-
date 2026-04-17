@@ -132,6 +132,7 @@ BEGIN
   VALUES (v_uid, NEW.email, COALESCE(NEW.raw_user_meta_data->>'business_name','My Business'), '27AAAPL1234C1ZV');
   INSERT INTO public.user_roles (user_id, role) VALUES (v_uid, 'user');
 
+  /*
   -- Seed mock GSTR-2B records
   INSERT INTO public.gst_records (user_id, invoice_number, invoice_date, vendor_name, vendor_gstin, taxable_amount, cgst, sgst, igst, total_amount, filing_period) VALUES
   (v_uid,'INV-2024-001','2024-10-05','Reliable Supplies Pvt Ltd','29AABCR1234M1Z5',50000,4500,4500,0,59000,'Oct-2024'),
@@ -160,7 +161,7 @@ BEGIN
   (v_uid,'INV-2024-007','2024-10-25','Bangalore IT Services','29AABCB6789T1Z5',95000,8550,8550,0,112100,'matched',0.98),
   -- Mismatched amounts
   (v_uid,'INV-2024-004','2024-10-15','Delhi Office Solutions','07AABCD3456Q1Z9',8500,765,765,0,10030,'mismatched',0.92),
-  (v_uid,'INV-2024-009','2024-11-02','Pune Electronics Hub','27AAACP5678V1Z9',62000,5400,5400,0,72800,'mismatched',0.89),
+  (v_uid,'INV-2024-009','2024-11-02','Pune Electronics Hub','27AAACP5678V1Z9',62000,5580,5580,0,73160,'mismatched',0.89),
   -- User-only (missing in GST)
   (v_uid,'INV-2024-100','2024-11-08','Unknown Vendor Co','27ABCDE1234F1Z5',30000,2700,2700,0,35400,'missing',0.85),
   (v_uid,'INV-2024-101','2024-11-15','Cash Vendor','',12000,1080,1080,0,14160,'flagged',0.65),
@@ -172,6 +173,7 @@ BEGIN
   (v_uid, 'Mismatch detected', '2 invoices have amount mismatches with GSTR-2B records.', 'warning', 'mismatch'),
   (v_uid, 'Missing GSTIN', 'Invoice INV-2024-101 was uploaded without a vendor GSTIN.', 'critical', 'compliance'),
   (v_uid, 'Potential ITC missed', '5 GSTR-2B invoices have no matching purchase entry in your books.', 'info', 'itc');
+  */
   RETURN NEW;
 END; $$;
 

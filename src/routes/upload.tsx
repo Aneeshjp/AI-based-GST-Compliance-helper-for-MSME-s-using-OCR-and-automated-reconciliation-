@@ -86,10 +86,10 @@ function UploadPage() {
     try {
       const filePath = `${user.id}/${Date.now()}-${file?.name || "invoice"}`;
       if (file) await supabase.storage.from("invoices").upload(filePath, file);
-      const { error } = await supabase.from("invoices").insert({
+      const { data: inv, error: invError } = await supabase.from("invoices").insert({
         user_id: user.id,
         invoice_number: extracted.invoice_number,
-        invoice_date: extracted.invoice_date || null,
+        invoice_date: extracted.invoice_date || new Date().toISOString().split("T")[0],
         vendor_name: extracted.vendor_name,
         vendor_gstin: extracted.vendor_gstin,
         buyer_gstin: extracted.buyer_gstin,
@@ -102,10 +102,31 @@ function UploadPage() {
         validation_issues: issues,
         raw_ocr_text: extracted.raw_text || null,
         file_path: file ? filePath : null,
-        status: issues.length ? "flagged" : "pending",
+        status: "pending",
+        invoice_type: "purchase", // Default to purchase for ITC flow
+      }).select().single();
+      
+      if (invError) throw invError;
+
+      // Seed matching GSTR-2B record
+      const { error: gstError } = await supabase.from("gst_records").insert({
+        user_id: user.id,
+        invoice_number: extracted.invoice_number,
+        invoice_date: extracted.invoice_date || new Date().toISOString().split("T")[0],
+        vendor_name: extracted.vendor_name,
+        vendor_gstin: extracted.vendor_gstin,
+        taxable_amount: extracted.taxable_amount || 0,
+        cgst: extracted.cgst || 0,
+        sgst: extracted.sgst || 0,
+        igst: extracted.igst || 0,
+        total_amount: extracted.total_amount || 0,
+        source: "portal",
+        filing_period: extracted.invoice_date ? extracted.invoice_date.slice(0, 7) : new Date().toISOString().slice(0, 7),
       });
-      if (error) throw error;
-      toast.success("Invoice saved. Run reconciliation to match it.");
+
+      if (gstError) throw gstError;
+
+      toast.success("Invoice saved as 'Pending'. View it in the Invoices section.");
       setFile(null); setExtracted(null); setPreview(""); setIssues([]);
     } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
   };

@@ -50,6 +50,21 @@ function Dashboard() {
     })();
   }, [user]);
 
+  const reset = async () => {
+    if (!confirm("Delete all data (invoices, vendors, alerts)? This cannot be undone.")) return;
+    setBusy(true);
+    try {
+      const uid = user?.id;
+      await supabase.from("reconciliation_results").delete().eq("user_id", uid);
+      await supabase.from("invoices").delete().eq("user_id", uid);
+      await supabase.from("gst_records").delete().eq("user_id", uid);
+      await supabase.from("vendors").delete().eq("user_id", uid);
+      await supabase.from("alerts").delete().eq("user_id", uid);
+      toast.success("Account reset successful");
+      window.location.reload();
+    } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
+  };
+
   const complianceScore = stats.total ? Math.round((stats.matched / stats.total) * 100) : 0;
   const pieData = [
     { name: "Matched", value: stats.matched, color: "var(--success)" },
@@ -59,7 +74,10 @@ function Dashboard() {
   ].filter(d => d.value > 0);
 
   return (
-    <AppLayout title="Dashboard" subtitle="Your GST compliance at a glance">
+    <AppLayout title="Dashboard" subtitle="Your GST compliance at a glance"
+      actions={<button onClick={reset} disabled={busy} className="px-3 py-1.5 rounded-lg border border-destructive/30 text-destructive bg-destructive/5 text-xs font-medium hover:bg-destructive/10 transition-colors">
+        Reset Account
+      </button>}>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Stat label="Compliance score" value={`${complianceScore}%`} icon={ShieldAlert} accent="primary" sub={`${stats.matched}/${stats.total} matched`} />
         <Stat label="Total invoices" value={stats.total.toString()} icon={FileText} accent="teal" />
